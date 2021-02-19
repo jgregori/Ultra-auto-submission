@@ -8,13 +8,13 @@ Tested for the following Learn Saas versions: 3900.6
 
 ## Main features
 
-- The tool takes a course id and external course id and retrives a list of assignments and students.
+- The tool takes an external course id and retrives a list of assignments and students.
 
-- For each one of the assignments, it loops over the student users and uses a selenium script to login, goes to the assingment page, opens a new attempt, inputs assingment text, uploads and attachment and hits submit.
+- For each one of the assignments, it loops over the student users and uses a selenium script to login, go to the assingment page, open a new attempt, input assingment text, upload an attachment and hit submit.
 
 - The tool generates a submission report that gather: Timestamp,Course Id,Assignment Id,Username,Status. If the submissions fails, it takes an screenshot that would allow to troubleshoot the issue.
 
-- The tool currently takes about 45 seconds to create a submission,as it depends on Ultra UX and load times, it is still faster than you, and it does the work on your behalf, so dont complain ;) 
+- The tool currently takes between 30 and 40 seconds to create a submission,as it depends on Ultra UX and load times, it is still faster than you, and it does the work on your behalf, so dont complain ;)
 
 ## Known issues
 
@@ -41,7 +41,7 @@ Tested for the following Learn Saas versions: 3900.6
 
     >`pip3 install -r requirements.txt`
 
-5. Create a credentials file named **learn_config.json** in the root folder, with the following structure. Do not change the name of this config file. You will need to create a new app in the developer portal as well as registering it on the target Learn Ultra instance with an user that has enough priviledges to get assignment and student information.
+5. Create a credentials file named **learn_config.json** in the root folder, with the following structure. Do not change the name of this config file. You will need to create a new app in the developer portal as well as registering it on the target Learn Ultra instance with an user that has enough priviledges to get assignment and student information.IMPORTANT.Place this file in a folder named credentials.
 
     >`{`
     >
@@ -53,7 +53,17 @@ Tested for the following Learn Saas versions: 3900.6
     >
     >`}`
 
-6. Once done using the tool, deactivate the virtual environment
+6. Create an app configuration file named **app_config.json**. This file will include the sumbission text and the path to the sumbission file. The file has the following structure
+
+    >`{`
+    >
+    > `"submission_text":"Bacon ipsum dolor amet tri-tip cow pork loin alcatra bacon jowl. Tenderloin ground round biltong...,`
+    >
+    > `"path_to_file":"./files/Submission_test.docx"`
+    >
+    >`}`
+
+7. Once done using the tool, deactivate the virtual environment
 
     >`deactivate`
 
@@ -61,18 +71,19 @@ Tested for the following Learn Saas versions: 3900.6
 
 This is a command line tool created with typer, so will be launched from the terminal
 
-Open a terminal and navegate to the folder 
+Open a terminal and navegate to the folder
 
-call `--help` to get a list of the available options
+call `--help` to get a list of the available options (although it is quite straightforward)
 
 >`python3 app.py --help`
 
-In order to run the CLI, you will need to provide a `--course-id` and a `--external-course-id`. Here´s an example:
+In order to run the CLI, you will need to provide a `--external-id`. Here´s an example:
 
->`python3 app.py --course-id '_1641_1' --course-id-external 'sub_test_002'`
+>`python3 app.py --external-id 'sub_test_002'`
 
 The app will run, creating the "submissions.csv" report and adding lines accordingly as the attempts are created.
 
 ## Backlog/Roadmap
 
-If the tool is used, I will update it to provide more granularity, for instance different submission text and files to be randomly uploaded.
+- Autocreate the required folders to run the application, so these dont clutter the github repository
+- Add timeout for the chromedriver and choice of driver to the app_config file so it is easier to run in different devices (i.e. raspberri)

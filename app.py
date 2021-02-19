@@ -1,3 +1,4 @@
+import json
 import typer
 from Bb_rest_helper import Bb_Utils
 from Bb_rest_helper import Get_Config
@@ -8,10 +9,14 @@ from Auto_Submission import Auto_submission
 #'sub_test_002'
 #'_1641_1'
 
-def main(course_id_external:str = typer.Option(...,help='Course external id, as a string, format is: "sub_test_002"'),
-    course_id:str = typer.Option(...,help= 'Course Id, as a string, format is: "_1641_1"')):
+def main(external_id:str = typer.Option(...,help='Course external id, as a string, format is: "sub_test_002"')):
+    with open('./app_config.json') as json_file:
+        data = json.load(json_file)
+        s_text = data['submission_text']
+        path_to_file = data['path_to_file']
+
     # Learn.
-    learn_conf = Get_Config('./learn_config.json')
+    learn_conf = Get_Config('./credentials/learn_config.json')
     learn_url = learn_conf.get_url()
     learn_key = learn_conf.get_key()
     learn_secret = learn_conf.get_secret()
@@ -23,19 +28,19 @@ def main(course_id_external:str = typer.Option(...,help='Course external id, as 
     # Rest API calls
     reqs = Bb_Requests()
     a = Auto_submission(learn_url, learn_token)
-    assignments = a.yield_assessment_list(course_id_external)
-    s_text = 'Bacon ipsum dolor amet tri-tip cow pork loin alcatra bacon jowl. Tenderloin ground round biltong, ribeye rump pig brisket meatball beef bresaola turducken ham hock fatback ham. Turkey andouille kevin kielbasa ham hock shankle. Brisket ball tip andouille meatball beef ribs corned beef prosciutto shank. Sausage chislic ball tip pork loin. Jowl andouille pork belly burgdoggen tail sausage tenderloin alcatra tongue picanha doner. Cupim biltong venison, doner meatball beef ribs ham hock bresaola landjaeger.'
+    primary_id = a.get_primary_course_id(external_id) 
+    assignments = a.yield_assessment_list(external_id)
     for ass in assignments:
         ass_id = ass[0]
-        students = a.yield_student_list(course_id_external)
+        students = a.yield_student_list(external_id)
         for stu in students:
             a.create_attempt(
                 stu[1],
                 stu[1],
-                course_id,
+                primary_id,
                 ass_id,
                 s_text,
-                './files/Submission_test.docx')
+                path_to_file)
 
 if __name__ == '__main__':
     typer.run(main)

@@ -3,6 +3,8 @@ import os
 import time
 from datetime import datetime
 import csv
+import requests
+import json
 
 from Bb_rest_helper import Bb_Utils
 from Bb_rest_helper import Get_Config
@@ -25,6 +27,15 @@ class Auto_submission():
         self._base_url = base_url
         self._req = Bb_Requests()
 
+    def get_primary_course_id(self, course_id):
+        self.external_id = f'externalId:{course_id}'
+        self.course_url = f'{self._base_url}/learn/api/public/v3/courses/{self.external_id}'
+        self.params={
+            'fields':'id'
+        }
+        primary_id = self._req.Bb_GET(self.course_url, self._token, self.params)
+        return primary_id['id']
+
     def yield_assessment_list(self, course_id):
         self.external_id = f'externalId:{course_id}'
         self.assignment_url = f'{self._base_url}/learn/api/public/v1/courses/{self.external_id}/contents'
@@ -43,12 +54,24 @@ class Auto_submission():
         self.membership_url = f'{self._base_url}/learn/api/public/v1/courses/{self.external_id}/users'
         self.params = {
             'role': 'Student',
-            'fields': 'userId,user.userName,courseRoleId'
+            'fields': 'userId,user.userName,courseRoleId',
         }
         students = self._req.Bb_GET(
             self.membership_url, self._token, self.params)
-        for s in students['results']:
-            yield s['userId'], s['user']['userName'], s['courseRoleId']
+        print(len(students['results']))
+        try:
+            for s in students['results']:
+                yield s['userId'], s['user']['userName'], s['courseRoleId']
+            
+            while students['paging']['nextPage']:
+                self.offset_url = students['paging']['nextPage']
+                r = requests.get(f'{self._base_url}{self.offset_url}',headers={'Authorization':'Bearer '+self._token})
+                students = json.loads(r.text)
+                for s2 in students['results']:
+                    yield s2['userId'], s2['user']['userName'], s2['courseRoleId']
+        except: 
+            print('No more pages')
+              
 
     def get_attempts(self, course_id, column_id):
         self.external_id = f'externalId:{course_id}'
@@ -94,9 +117,8 @@ class Auto_submission():
         self.submission_file = submission_file
         try:
             # setup driver
-            self.driver = webdriver.Chrome('./chromedriver')
-            # self.driver.set_page_load_timeout(30)
-            self.wait = WebDriverWait(self.driver, 10, poll_frequency=5)
+            self.driver = webdriver.Chrome("./chromedriver")
+            self.wait = WebDriverWait(self.driver,10, poll_frequency=5)
             # Get to login page.
             self.driver.get(self._base_url)
             # Accept cookies.
@@ -113,7 +135,7 @@ class Auto_submission():
             self.driver.find_element_by_id("entry-login").click()
             # Get to the target assignment.
             self.driver.get(
-                f'https://emeasedemo.blackboard.com/ultra/courses/{self.course_id_internal}/outline/assessment/{self.assessment_id}/overview?courseId={self.course_id_internal}')
+                f'{self._base_url}/ultra/courses/{self.course_id_internal}/outline/assessment/{self.assessment_id}/overview?courseId={self.course_id_internal}')
             self.wait.until(
                 ec.element_to_be_clickable(
                     (By.CLASS_NAME, "label-button-attempt"))).click()
@@ -230,7 +252,7 @@ class Auto_submission():
 if __name__ == '__main__':
 
     # Learn.
-    learn_conf = Get_Config('./learn_config.json')
+    learn_conf = Get_Config('./credentials/learn_config.json')
     learn_url = learn_conf.get_url()
     learn_key = learn_conf.get_key()
     learn_secret = learn_conf.get_secret()
@@ -247,16 +269,14 @@ if __name__ == '__main__':
     # a.get_attempts('sub_test_001','_15144_1')
     # a.create_attempt('javier_demo01','javier_demo01','_1638_1','_47144_1',s_text,'./Submission_test.docx')
 
-    assignments = a.yield_assessment_list('sub_test_002')
+    assignments = a.yield_assessment_list('javier')
     s_text = 'Bacon ipsum dolor amet tri-tip cow pork loin alcatra bacon jowl. Tenderloin ground round biltong, ribeye rump pig brisket meatball beef bresaola turducken ham hock fatback ham. Turkey andouille kevin kielbasa ham hock shankle. Brisket ball tip andouille meatball beef ribs corned beef prosciutto shank. Sausage chislic ball tip pork loin. Jowl andouille pork belly burgdoggen tail sausage tenderloin alcatra tongue picanha doner. Cupim biltong venison, doner meatball beef ribs ham hock bresaola landjaeger.'
     for ass in assignments:
         ass_id = ass[0]
-        students = a.yield_student_list('sub_test_002')
+        students = a.yield_student_list('javier')
         for stu in students:
-            a.create_attempt(
-                stu[1],
-                stu[1],
-                '_1641_1',
-                ass_id,
-                s_text,
-                './files/Submission_test.docx')
+            print(stu)
+        
+    print(a.get_primary_course_id('javier'))
+        
+    
