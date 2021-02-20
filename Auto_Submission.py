@@ -58,10 +58,9 @@ class Auto_submission():
         }
         students = self._req.Bb_GET(
             self.membership_url, self._token, self.params)
-        print(len(students['results']))
         try:
             for s in students['results']:
-                yield s['userId'], s['user']['userName'], s['courseRoleId']
+               yield s['userId'], s['user']['userName'], s['courseRoleId']
             
             while students['paging']['nextPage']:
                 self.offset_url = students['paging']['nextPage']
@@ -70,7 +69,7 @@ class Auto_submission():
                 for s2 in students['results']:
                     yield s2['userId'], s2['user']['userName'], s2['courseRoleId']
         except: 
-            print('No more pages')
+            pass
               
 
     def get_attempts(self, course_id, column_id):
@@ -274,8 +273,9 @@ if __name__ == '__main__':
     for ass in assignments:
         ass_id = ass[0]
         students = a.yield_student_list('javier')
+        
         for stu in students:
-            print(stu)
+           print(stu)
         
     print(a.get_primary_course_id('javier'))
         
