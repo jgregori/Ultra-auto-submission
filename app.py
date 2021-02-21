@@ -34,10 +34,10 @@ def main(external_id:str = typer.Option(...,help='Course external id, as a strin
         ass_id = ass[0]
         students = a.yield_student_list(external_id)
         for stu in students:
-            print(stu)
+            
             a.create_attempt(
-                stu[1],
-                stu[1],
+                stu['user']['userName'],
+                stu['user']['userName'],
                 primary_id,
                 ass_id,
                 s_text,

@@ -54,23 +54,30 @@ class Auto_submission():
         self.membership_url = f'{self._base_url}/learn/api/public/v1/courses/{self.external_id}/users'
         self.params = {
             'role': 'Student',
-            'fields': 'userId,user.userName,courseRoleId',
+            'fields': 'userId,user.userName,courseRoleId'
         }
-        students = self._req.Bb_GET(
-            self.membership_url, self._token, self.params)
+        self.headers = {
+            'Authorization':f'Bearer {self._token}',
+            'Content-Type': "Application/json"
+            }
+        
+        student_list = []
         try:
-            for s in students['results']:
-               yield s['userId'], s['user']['userName'], s['courseRoleId']
+            r = requests.request('GET', self.membership_url, headers= self.headers, params= self.params)
+            r.raise_for_status()
+            data = json.loads(r.text)
+            for d in data['results']:
+                student_list.append(d)
             
-            while students['paging']['nextPage']:
-                self.offset_url = students['paging']['nextPage']
-                r = requests.get(f'{self._base_url}{self.offset_url}',headers={'Authorization':'Bearer '+self._token})
-                students = json.loads(r.text)
-                for s2 in students['results']:
-                    yield s2['userId'], s2['user']['userName'], s2['courseRoleId']
+            while data['paging']['nextPage']:
+                self.offset_url = data['paging']['nextPage']
+                r = requests.get(f'{self._base_url}{self.offset_url}',headers={f'Authorization':f'Bearer {self._token}'})
+                data = json.loads(r.text)
+                for d in data['results']:
+                    student_list.append(d)
+            
         except: 
-            pass
-              
+            return student_list  
 
     def get_attempts(self, course_id, column_id):
         self.external_id = f'externalId:{course_id}'
@@ -274,9 +281,12 @@ if __name__ == '__main__':
         ass_id = ass[0]
         students = a.yield_student_list('javier')
         
+        
+        '''
+        print(students['results'])
         for stu in students:
            print(stu)
-        
+        '''
     print(a.get_primary_course_id('javier'))
         
     
