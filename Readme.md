@@ -63,7 +63,9 @@ Tested for the following Learn Saas versions: 3900.6
     >
     >`}`
 
-7. Once done using the tool, deactivate the virtual environment
+7. For Selenium to work, you will need to dowload the right version of the chrome driver, you should check your version of chrome and search for the version of the chromedriver that matches with your version of Chrome. You can find the drivers here https://chromedriver.chromium.org/downloads . Note that I have included the version for Chrome 86 that I am using at the moment. The driver needs to be in the root folder.
+
+8. Once done using the tool, deactivate the virtual environment
 
     >`deactivate`
 
@@ -82,6 +84,28 @@ In order to run the CLI, you will need to provide a `--external-id`. Here´s an 
 >`python3 app.py --external-id 'sub_test_002'`
 
 The app will run, creating the "submissions.csv" report and adding lines accordingly as the attempts are created.
+
+## Usage on a Rasbperri Pi
+
+Using this tool in a Raspberri Pi is nice, as it has low power consumption and can be left unattended for long periods of time while the scripts are running, also, it won´t interfere with your day to day activities in your main computer. The usage is pretty much the same, except for two configurations.
+
+1. Chromedriver needs to be installed differently, you need to open a terminal and type
+
+    >`sudo apt-get install chromium-chromedriver`
+
+2. Then you need to edit `Auto_Submission.py` and remove the path to the driver, so it should be
+
+    > `#line 126`
+    >
+    >`self.driver = webdriver.Chrome()`
+
+3. Finally, as the Pi is way less powerful than the computer, you need to give it a bit more time before the timeout, so edit line 127 to change the value from 10 to 30
+
+    > `#line 127`
+    >
+    >`self.wait = WebDriverWait(self.driver,30, poll_frequency=5)`
+
+With these changes, usage is the same as in the computer.
 
 ## Backlog/Roadmap
 
