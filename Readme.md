@@ -4,7 +4,7 @@ This is an internal Blackboard CLI tool that creates attempts in Learn Ultra ass
 
 The purpose of this tool is to facilitate the creation of multiple "demo" attempts that are required in RFP usability testing as well as easily populating demo courses.
 
-Tested for the following Learn Saas versions: 3900.6
+Tested for the following Learn Saas versions: 3900.48
 
 ## Main features
 
@@ -63,7 +63,7 @@ Tested for the following Learn Saas versions: 3900.6
     >
     >`}`
 
-7. For Selenium to work, you will need to dowload the right version of the chrome driver, you should check your version of chrome and search for the version of the chromedriver that matches with your version of Chrome. You can find the drivers here https://chromedriver.chromium.org/downloads . Note that I have included the version for Chrome 86 that I am using at the moment. The driver needs to be in the root folder.
+7. For Selenium to work, you will need to dowload the right version of the chrome driver, you should check your version of chrome and search for the version of the chromedriver that matches with your version of Chrome. You can find the drivers here https://chromedriver.chromium.org/downloads . Note that I have included the version for Chrome 105 that I am using at the moment. The driver needs to be in the root folder.
 
 8. Once done using the tool, deactivate the virtual environment
 

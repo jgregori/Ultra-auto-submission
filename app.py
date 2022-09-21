@@ -6,15 +6,16 @@ from Bb_rest_helper import Auth_Helper
 from Bb_rest_helper import Bb_Requests
 from Auto_Submission import Auto_submission
 
-#'sub_test_002'
-#'_1641_1'
 
 def main(external_id:str = typer.Option(...,help='Course external id, as a string, format is: "sub_test_002"')):
+    print(external_id)
     with open('./app_config.json') as json_file:
         data = json.load(json_file)
         s_text = data['submission_text']
         path_to_file = data['path_to_file']
 
+    utils = Bb_Utils()
+    utils.set_logging()    
     # Learn.
     learn_conf = Get_Config('./credentials/learn_config.json')
     learn_url = learn_conf.get_url()
@@ -28,11 +29,11 @@ def main(external_id:str = typer.Option(...,help='Course external id, as a strin
     # Rest API calls
     reqs = Bb_Requests()
     a = Auto_submission(learn_url, learn_token)
-    primary_id = a.get_primary_course_id(external_id) 
-    assignments = a.yield_assessment_list(external_id)
+    primary_id = utils.learn_convert_external_id(learn_url, learn_token, external_id)
+    assignments = a.get_assessment_list(external_id)
     for ass in assignments:
-        ass_id = ass[0]
-        students = a.yield_student_list(external_id)
+        ass_id = ass['id']
+        students = a.get_student_list(external_id)
         for stu in students:
             
             a.create_attempt(

@@ -22,90 +22,34 @@ from selenium.webdriver.support import expected_conditions as ec
 
 class Auto_submission():
 
-    def __init__(self, base_url, token):
+    def __init__(self, learn_url, token):
         self._token = token
-        self._base_url = base_url
+        self._learn_url = learn_url
         self._req = Bb_Requests()
 
-    def get_primary_course_id(self, course_id):
+    def get_assessment_list(self, course_id):
         self.external_id = f'externalId:{course_id}'
-        self.course_url = f'{self._base_url}/learn/api/public/v3/courses/{self.external_id}'
-        self.params={
-            'fields':'id'
-        }
-        primary_id = self._req.Bb_GET(self.course_url, self._token, self.params)
-        return primary_id['id']
-
-    def yield_assessment_list(self, course_id):
-        self.external_id = f'externalId:{course_id}'
-        self.assignment_url = f'{self._base_url}/learn/api/public/v1/courses/{self.external_id}/contents'
+        self.assignment_url = f'/learn/api/public/v1/courses/{self.external_id}/contents'
         self.params = {
             'recursive': True,
             'contentHandler': 'resource/x-bb-asmt-test-link',
             'fields': 'id,title,contentHandler.gradeColumnId'
         }
         assignments = self._req.Bb_GET(
-            self.assignment_url, self._token, self.params)
-        for a in assignments['results']:
-            yield a['id'], a['title'], a['contentHandler']['gradeColumnId']
+            self._learn_url,self.assignment_url, self._token, self.params)
+        return assignments
 
-    def yield_student_list(self, course_id):
+    def get_student_list(self, course_id):
         self.external_id = f'externalId:{course_id}'
-        self.membership_url = f'{self._base_url}/learn/api/public/v1/courses/{self.external_id}/users'
+        self.membership_url = f'/learn/api/public/v1/courses/{self.external_id}/users'
         self.params = {
             'role': 'Student',
             'fields': 'userId,user.userName,courseRoleId'
         }
-        self.headers = {
-            'Authorization':f'Bearer {self._token}',
-            'Content-Type': "Application/json"
-            }
-        
-        student_list = []
-        try:
-            r = requests.request('GET', self.membership_url, headers= self.headers, params= self.params)
-            r.raise_for_status()
-            data = json.loads(r.text)
-            for d in data['results']:
-                student_list.append(d)
-            
-            while data['paging']['nextPage']:
-                self.offset_url = data['paging']['nextPage']
-                r = requests.get(f'{self._base_url}{self.offset_url}',headers={f'Authorization':f'Bearer {self._token}'})
-                data = json.loads(r.text)
-                for d in data['results']:
-                    student_list.append(d)
-            
-        except: 
-            return student_list  
+        students= self._req.Bb_GET(
+            self._learn_url, self.membership_url, self._token, self.params)
+        return students  
 
-    def get_attempts(self, course_id, column_id):
-        self.external_id = f'externalId:{course_id}'
-        self.column_id = column_id
-        self.attempt_url = f'{self._base_url}/learn/api/public/v2/courses/{self.external_id}/gradebook/columns/{self.column_id}/attempts'
-        self.params = {}
-        attempts = self._req.Bb_GET(self.attempt_url, self._token, self.params)
-        for a in attempts['results']:
-            yield a
-
-    def api_attempt(self, course_id, user_id, column_id):
-        self.user_id = user_id
-        self.external_id = f'externalId:{course_id}'
-        self.column_id = column_id
-        self.attempt_url = f'{self._base_url}/learn/api/public/v2/courses/{self.external_id}/gradebook/columns/{self.column_id}/attempts'
-        self.submission = 'Spicy jalapeno bacon ipsum dolor amet shank tail qui dolore reprehenderit porchetta venison beef ribs beef adipisicing ad. Leberkas aliquip meatloaf ground round doner, buffalo in alcatra laborum non excepteur. Swine minim labore prosciutto pork chop. Nisi beef ribs cupim, deserunt kielbasa irure corned beef do enim culpa. Turducken hamburger pariatur biltong strip steak landjaeger eiusmod venison. Incididunt andouille consequat, beef ribs elit doner proident venison pancetta porchetta.'
-        self.payload = {
-            "userId": self.user_id,
-            "status": "NeedsGrading",
-            "studentSubmission": self.submission
-        }
-        self.params = {}
-        submission = self._req.Bb_POST(
-            self.attempt_url,
-            self._token,
-            self.params,
-            self.payload)
-        print(submission)
 
     def create_attempt(
             self,
@@ -124,11 +68,14 @@ class Auto_submission():
         try:
             # setup driver
             self.driver = webdriver.Chrome("./chromedriver")
-            self.wait = WebDriverWait(self.driver,10, poll_frequency=5)
+            self.wait = WebDriverWait(self.driver,45, poll_frequency=5)
             # Get to login page.
-            self.driver.get(self._base_url)
+            self.driver.get(self._learn_url)
             # Accept cookies.
-            self.driver.find_element_by_class_name("button-1").click()
+            self.wait.until(
+                ec.element_to_be_clickable(
+                    (By.CLASS_NAME, "button-1"))).click()
+            time.sleep(5)
             # Locate username field and enter username.
             self.username = self.driver.find_element_by_id("user_id")
             self.username.clear()
@@ -141,7 +88,7 @@ class Auto_submission():
             self.driver.find_element_by_id("entry-login").click()
             # Get to the target assignment.
             self.driver.get(
-                f'{self._base_url}/ultra/courses/{self.course_id_internal}/outline/assessment/{self.assessment_id}/overview?courseId={self.course_id_internal}')
+                f'{self._learn_url}/ultra/courses/{self.course_id_internal}/outline/assessment/{self.assessment_id}/overview?courseId={self.course_id_internal}')
             self.wait.until(
                 ec.element_to_be_clickable(
                     (By.CLASS_NAME, "label-button-attempt"))).click()
@@ -185,7 +132,11 @@ class Auto_submission():
                 ec.element_to_be_clickable(
                     (By.XPATH, "/html/body/div[9]/div/footer/div/div[2]/span[2]/button"))).click()
             time.sleep(4)
-
+            # Clicks to close submission recipt --> update to 3900.48
+            self.wait.ultil(
+                ec.element_to_be_clickable(
+                    (By.XPATH, "/html/body/div[14]/div/footer/div/div[2]/span[1]/div/button"))).click()
+            time.sleep(4)
             if os.path.isfile('./reports/submissions.csv'):
                 with open(f'./reports/submissions.csv', 'a', newline='') as csv_file:
                     self.fieldnames = [
@@ -255,38 +206,5 @@ class Auto_submission():
             self.driver.close()
 
 
-if __name__ == '__main__':
 
-    # Learn.
-    learn_conf = Get_Config('./credentials/learn_config.json')
-    learn_url = learn_conf.get_url()
-    learn_key = learn_conf.get_key()
-    learn_secret = learn_conf.get_secret()
 
-    # Authenticate and get the token (Learn).
-    learn_auth = Auth_Helper(learn_url, learn_key, learn_secret)
-    learn_token = learn_auth.learn_auth()
-
-    # Rest API calls
-    reqs = Bb_Requests()
-    a = Auto_submission(learn_url, learn_token)
-
-    #a.api_attempt('sub_test_001', '_577_1','_15144_1')
-    # a.get_attempts('sub_test_001','_15144_1')
-    # a.create_attempt('javier_demo01','javier_demo01','_1638_1','_47144_1',s_text,'./Submission_test.docx')
-
-    assignments = a.yield_assessment_list('javier')
-    s_text = 'Bacon ipsum dolor amet tri-tip cow pork loin alcatra bacon jowl. Tenderloin ground round biltong, ribeye rump pig brisket meatball beef bresaola turducken ham hock fatback ham. Turkey andouille kevin kielbasa ham hock shankle. Brisket ball tip andouille meatball beef ribs corned beef prosciutto shank. Sausage chislic ball tip pork loin. Jowl andouille pork belly burgdoggen tail sausage tenderloin alcatra tongue picanha doner. Cupim biltong venison, doner meatball beef ribs ham hock bresaola landjaeger.'
-    for ass in assignments:
-        ass_id = ass[0]
-        students = a.yield_student_list('javier')
-        
-        
-        '''
-        print(students['results'])
-        for stu in students:
-           print(stu)
-        '''
-    print(a.get_primary_course_id('javier'))
-        
-    
