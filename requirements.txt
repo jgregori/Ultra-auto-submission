@@ -1,3 +1,2 @@
 selenium
 Bb-rest-helper
-typer
